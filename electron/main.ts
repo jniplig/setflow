@@ -151,12 +151,13 @@ ipcMain.handle('get-backend-url', () => BACKEND_URL)
 
 app.whenReady().then(async () => {
   // ── Content Security Policy ───────────────────────────────────────────────
-  // Dev needs 'unsafe-eval' for Vite HMR and the ws:// WebSocket connection.
-  // Prod omits both — scripts are bundled, no eval required.
+  // Dev needs 'unsafe-eval' + 'unsafe-inline' for Vite HMR and the React Fast
+  // Refresh preamble (@vitejs/plugin-react injects an inline script).
+  // Prod omits both — scripts are fully bundled, no eval or inline required.
   const CSP = IS_DEV
     ? [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval'",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
         "connect-src 'self' http://127.0.0.1:8000 http://localhost:5173 ws://localhost:5173",

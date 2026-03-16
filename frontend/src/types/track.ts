@@ -10,6 +10,9 @@ export interface Track {
   filename: string | null
 }
 
+export type SortColumn = 'title' | 'artist' | 'genre' | 'bpm' | 'key' | 'duration'
+export type SortDir = 'asc' | 'desc'
+
 export interface TracksParams {
   search?: string
   genre?: string
@@ -17,4 +20,6 @@ export interface TracksParams {
   max_bpm?: number
   limit?: number
   offset?: number
+  sort_by?: SortColumn
+  sort_dir?: SortDir
 }

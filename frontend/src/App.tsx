@@ -75,6 +75,22 @@ export default function App() {
     addTrack(track)
   }
 
+  const handleExportToEngine = async () => {
+    if (!activeSetlist || activeSetlist.tracks.length === 0) return
+    const res = await fetch(`${API_BASE}/playlists/export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: activeSetlist.name,
+        tracks: activeSetlist.tracks.map(t => ({ id: t.id })),
+      }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.detail ?? `HTTP ${res.status}`)
+    }
+  }
+
   const selectedCount = selectedIds.size
 
   return (
@@ -160,6 +176,7 @@ export default function App() {
           onDelete={deleteSetlist}
           onRemoveTrack={removeTrack}
           onReorder={reorderTracks}
+          onExportToEngine={handleExportToEngine}
         />
       </div>
 

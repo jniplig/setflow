@@ -1,4 +1,4 @@
-import { useState, useDeferredValue } from 'react'
+import { useState, useDeferredValue, useEffect } from 'react'
 import { SearchBar } from './components/SearchBar'
 import { TrackTable } from './components/TrackTable'
 import { Pagination } from './components/Pagination'
@@ -8,7 +8,10 @@ import { useTracks } from './hooks/useTracks'
 import { useSetlists } from './hooks/useSetlists'
 import { Track, SortColumn, SortDir } from './types/track'
 
-const API_BASE = 'http://localhost:8000'
+async function getApiBase(): Promise<string> {
+  if (window.electronAPI) return window.electronAPI.getBackendUrl()
+  return 'http://localhost:8000'
+}
 
 export default function App() {
   const [search, setSearch] = useState('')
@@ -17,6 +20,8 @@ export default function App() {
   const [maxBpm, setMaxBpm] = useState<number | undefined>()
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [previewTrack, setPreviewTrack] = useState<Track | null>(null)
+  const [apiBase, setApiBase] = useState('http://localhost:8000')
+  useEffect(() => { getApiBase().then(setApiBase) }, [])
   const [sortBy, setSortBy]   = useState<SortColumn>('artist')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -77,7 +82,8 @@ export default function App() {
 
   const handleExportToEngine = async () => {
     if (!activeSetlist || activeSetlist.tracks.length === 0) return
-    const res = await fetch(`${API_BASE}/playlists/export`, {
+    const apiBase = await getApiBase()
+    const res = await fetch(`${apiBase}/playlists/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -184,7 +190,7 @@ export default function App() {
       {previewTrack && (
         <MiniPlayer
           track={previewTrack}
-          apiBase={API_BASE}
+          apiBase={apiBase}
           onClose={() => setPreviewTrack(null)}
         />
       )}

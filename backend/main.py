@@ -6,7 +6,7 @@ Run with: uvicorn backend.main:app --reload
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import tracks, audio, waveform
+from backend.routers import tracks, audio, waveform, playlists
 
 app = FastAPI(
     title="Setflow API",
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(tracks.router)
 app.include_router(audio.router)
 app.include_router(waveform.router)
+app.include_router(playlists.router)
 
 
 @app.get("/health")

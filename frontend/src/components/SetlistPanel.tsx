@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Setlist } from '../types/setlist'
 import { Track } from '../types/track'
 import { SetlistSelector } from './SetlistSelector'
@@ -15,6 +15,7 @@ interface Props {
   onDelete: (id: string) => void
   onRemoveTrack: (trackId: number) => void
   onReorder: (from: number, to: number) => void
+  onExportToEngine: () => Promise<void>
 }
 
 function exportAsText(setlist: Setlist): string {
@@ -41,12 +42,16 @@ function downloadFile(filename: string, content: string, mime: string) {
   URL.revokeObjectURL(url)
 }
 
+type ExportState = 'idle' | 'loading' | 'success' | 'error'
+
 export function SetlistPanel({
   setlists, activeSetlist, activeId,
   onSelect, onCreate, onRename, onDelete,
-  onRemoveTrack, onReorder,
+  onRemoveTrack, onReorder, onExportToEngine,
 }: Props) {
   const dragIndex = useRef<number | null>(null)
+  const [exportState, setExportState] = useState<ExportState>('idle')
+  const [exportError, setExportError] = useState<string | null>(null)
   const tracks: Track[] = activeSetlist?.tracks ?? []
 
   const handleDragStart = (index: number) => { dragIndex.current = index }
@@ -54,6 +59,20 @@ export function SetlistPanel({
     if (dragIndex.current === null || dragIndex.current === toIndex) return
     onReorder(dragIndex.current, toIndex)
     dragIndex.current = null
+  }
+
+  const handleExportEngine = async () => {
+    setExportState('loading')
+    setExportError(null)
+    try {
+      await onExportToEngine()
+      setExportState('success')
+      setTimeout(() => setExportState('idle'), 3000)
+    } catch (err: unknown) {
+      setExportState('error')
+      setExportError(err instanceof Error ? err.message : 'Export failed')
+      setTimeout(() => setExportState('idle'), 5000)
+    }
   }
 
   const handleExportText = () => {
@@ -132,18 +151,38 @@ export function SetlistPanel({
 
       {/* Export footer */}
       {tracks.length > 0 && (
-        <div className="px-4 py-3 border-t border-surface-600 flex gap-2">
+        <div className="px-4 py-3 border-t border-surface-600 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportText}
+              className="flex-1 text-xs border border-surface-600 text-muted px-2 py-1.5 rounded font-display hover:border-accent hover:text-accent transition-colors"
+            >
+              Export .txt
+            </button>
+            <button
+              onClick={handleExportPdf}
+              className="flex-1 text-xs border border-surface-600 text-muted px-2 py-1.5 rounded font-display hover:border-accent hover:text-accent transition-colors"
+            >
+              Export PDF
+            </button>
+          </div>
           <button
-            onClick={handleExportText}
-            className="flex-1 text-xs border border-surface-600 text-muted px-2 py-1.5 rounded font-display hover:border-accent hover:text-accent transition-colors"
+            onClick={handleExportEngine}
+            disabled={exportState === 'loading'}
+            className={`w-full text-xs px-2 py-1.5 rounded font-display transition-colors border
+              ${exportState === 'success'
+                ? 'border-green-500 text-green-400 cursor-default'
+                : exportState === 'error'
+                ? 'border-red-500 text-red-400 cursor-default'
+                : exportState === 'loading'
+                ? 'border-surface-600 text-muted cursor-wait'
+                : 'border-accent text-accent hover:bg-accent hover:text-white'
+              }`}
           >
-            Export .txt
-          </button>
-          <button
-            onClick={handleExportPdf}
-            className="flex-1 text-xs border border-surface-600 text-muted px-2 py-1.5 rounded font-display hover:border-accent hover:text-accent transition-colors"
-          >
-            Export PDF
+            {exportState === 'loading' && '⏳ Exporting…'}
+            {exportState === 'success' && '✓ Exported to Engine DJ'}
+            {exportState === 'error'   && `✗ ${exportError ?? 'Export failed'}`}
+            {exportState === 'idle'    && '→ Export to Engine DJ'}
           </button>
         </div>
       )}

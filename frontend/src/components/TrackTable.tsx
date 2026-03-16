@@ -72,7 +72,7 @@ export function TrackTable({
   ]
 
   return (
-    <div className="overflow-hidden" ref={tableRef}>
+    <div ref={tableRef}>
       <table className="w-full text-sm font-display table-fixed">
         <colgroup>
           <col style={{ width: `${widths.checkbox}%` }} />
@@ -85,11 +85,11 @@ export function TrackTable({
           <col style={{ width: `${widths.actions}%` }} />
         </colgroup>
 
-        <thead className="sticky top-0 bg-surface-800 z-10">
-          <tr className="border-b border-surface-600 text-muted text-xs uppercase tracking-widest">
+        <thead>
+          <tr className="text-muted text-xs uppercase tracking-widest">
 
             {/* Checkbox */}
-            <th className="py-3 px-3 text-center">
+            <th className="sticky top-0 bg-surface-800 z-10 border-b border-surface-600 py-3 px-3 text-center">
               <input
                 type="checkbox"
                 checked={allSelected}
@@ -101,7 +101,7 @@ export function TrackTable({
 
             {/* Sortable + resizable headers */}
             {columns.map(({ col, label, align, next }) => (
-              <th key={col} className={`relative py-3 px-3 ${align} select-none`}>
+              <th key={col} className={`sticky top-0 bg-surface-800 z-10 border-b border-surface-600 relative py-3 px-3 ${align} select-none`}>
                 <button
                   onClick={() => onSort(col)}
                   className={`flex items-center gap-1 w-full ${align === 'text-right' ? 'justify-end' : align === 'text-center' ? 'justify-center' : 'justify-start'} hover:text-white transition-colors ${sortBy === col ? 'text-white' : ''}`}
@@ -114,7 +114,7 @@ export function TrackTable({
             ))}
 
             {/* Actions — with reset button */}
-            <th className="py-3 px-3 text-right">
+            <th className="sticky top-0 bg-surface-800 z-10 border-b border-surface-600 py-3 px-3 text-right">
               <button
                 onClick={resetWidths}
                 title="Reset column widths"

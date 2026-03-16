@@ -1,0 +1,55 @@
+{
+  "name": "setflow",
+  "version": "0.1.0",
+  "description": "Engine DJ library browser and DJ set planner",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "dev":              "concurrently \"npm run dev:frontend\" \"npm run dev:electron\"",
+    "dev:frontend":     "cd frontend && npm run dev",
+    "dev:electron":     "wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && electron .",
+
+    "build":            "npm run build:frontend && npm run build:electron && npm run build:backend",
+    "build:frontend":   "cd frontend && npm run build",
+    "build:electron":   "tsc -p electron/tsconfig.json",
+    "build:backend":    "pyinstaller setflow-backend.spec --noconfirm",
+
+    "package":          "npm run build && electron-builder --win",
+    "package:dir":      "npm run build && electron-builder --win --dir"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "concurrently": "^9.0.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.5.3",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.setflow.app",
+    "productName": "Setflow",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/electron/**/*",
+      "dist/renderer/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/backend",
+        "to":   "backend",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon":   "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick":          false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

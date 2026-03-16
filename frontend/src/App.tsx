@@ -6,7 +6,7 @@ import { SetlistPanel } from './components/SetlistPanel'
 import { MiniPlayer } from './components/MiniPlayer'
 import { useTracks } from './hooks/useTracks'
 import { useSetlists } from './hooks/useSetlists'
-import { Track } from './types/track'
+import { Track, SortColumn, SortDir } from './types/track'
 
 const API_BASE = 'http://localhost:8000'
 
@@ -17,6 +17,8 @@ export default function App() {
   const [maxBpm, setMaxBpm] = useState<number | undefined>()
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [previewTrack, setPreviewTrack] = useState<Track | null>(null)
+  const [sortBy, setSortBy]   = useState<SortColumn>('artist')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   const deferredSearch = useDeferredValue(search)
   const deferredGenre  = useDeferredValue(genre)
@@ -26,7 +28,20 @@ export default function App() {
     genre:  deferredGenre  || undefined,
     min_bpm: minBpm,
     max_bpm: maxBpm,
+    sort_by: sortBy,
+    sort_dir: sortDir,
   })
+
+  const handleSort = (col: SortColumn) => {
+    if (col === sortBy) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(col)
+      setSortDir('asc')
+    }
+    setPage(0)
+    setSelectedIds(new Set())
+  }
 
   const {
     setlists, activeSetlist, activeId,
@@ -124,6 +139,9 @@ export default function App() {
             <TrackTable
               tracks={tracks}
               selectedIds={selectedIds}
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSort={handleSort}
               onToggleTrack={handleToggleTrack}
               onToggleAll={handleToggleAll}
               onAddToSetlist={handleAddToSetlist}

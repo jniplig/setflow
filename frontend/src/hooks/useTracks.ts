@@ -19,10 +19,12 @@ export function useTracks(params: TracksParams) {
 
   const buildFilterQuery = (p: TracksParams) => {
     const q = new URLSearchParams()
-    if (p.search)  q.set('search',  p.search)
-    if (p.genre)   q.set('genre',   p.genre)
-    if (p.min_bpm) q.set('min_bpm', String(p.min_bpm))
-    if (p.max_bpm) q.set('max_bpm', String(p.max_bpm))
+    if (p.search)   q.set('search',   p.search)
+    if (p.genre)    q.set('genre',    p.genre)
+    if (p.min_bpm)  q.set('min_bpm',  String(p.min_bpm))
+    if (p.max_bpm)  q.set('max_bpm',  String(p.max_bpm))
+    if (p.sort_by)  q.set('sort_by',  p.sort_by)
+    if (p.sort_dir) q.set('sort_dir', p.sort_dir)
     return q
   }
 
@@ -63,12 +65,12 @@ export function useTracks(params: TracksParams) {
     }
   }, [])
 
-  // Reset page + refresh count when filters change
+  // Reset page + refresh when filters or sort changes
   useEffect(() => {
     setPage(0)
     fetchCount(params)
     fetchTracks(params, 0)
-  }, [params.search, params.genre, params.min_bpm, params.max_bpm])
+  }, [params.search, params.genre, params.min_bpm, params.max_bpm, params.sort_by, params.sort_dir])
 
   // Fetch tracks when page changes
   useEffect(() => {

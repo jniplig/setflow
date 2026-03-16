@@ -55,6 +55,16 @@ def get_track_count(
     return {"count": total}
 
 
+SORT_COLUMN_MAP = {
+    "title":    "title",
+    "artist":   "artist",
+    "genre":    "genre",
+    "bpm":      "bpm",
+    "key":      "key",
+    "duration": "length",
+}
+
+
 @router.get("/", response_model=list[Track])
 def get_tracks(
     search: Optional[str]    = Query(None, description="Search title or artist"),
@@ -63,6 +73,8 @@ def get_tracks(
     max_bpm: Optional[float] = Query(None, description="Maximum BPM"),
     limit: int               = Query(100, le=2000, description="Max results to return"),
     offset: int              = Query(0, description="Pagination offset"),
+    sort_by: str             = Query("artist", description="Column to sort by"),
+    sort_dir: str            = Query("asc", description="Sort direction: asc or desc"),
 ):
     """
     Returns tracks merged from all discovered Engine DJ databases.
@@ -74,11 +86,13 @@ def get_tracks(
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
+    db_col   = SORT_COLUMN_MAP.get(sort_by, "artist")
+    reverse  = sort_dir.lower() == "desc"
+
     where, params = _build_filter_query(search, genre, min_bpm, max_bpm)
     query = f"""
         SELECT id, title, artist, bpm, key, length, genre, filename
         FROM Track {where}
-        ORDER BY artist, title
     """
 
     # Fetch all matching rows from every DB, deduplicate, then paginate
@@ -94,7 +108,10 @@ def get_tracks(
         conn.close()
 
     # Sort merged results and apply pagination here
-    all_rows.sort(key=lambda r: (r["artist"] or "", r["title"] or ""))
+    all_rows.sort(
+        key=lambda r: (r[db_col] is None, r[db_col] if r[db_col] is not None else ""),
+        reverse=reverse,
+    )
     paginated = all_rows[offset: offset + limit]
 
     return [

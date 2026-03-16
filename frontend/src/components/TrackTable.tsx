@@ -1,9 +1,13 @@
 import { Track } from '../types/track'
+import { SortColumn, SortDir } from '../types/track'
 import { useColumnWidths } from '../hooks/useColumnWidths'
 
 interface Props {
   tracks: Track[]
   selectedIds: Set<number>
+  sortBy: SortColumn
+  sortDir: SortDir
+  onSort: (col: SortColumn) => void
   onToggleTrack: (id: number) => void
   onToggleAll: (checked: boolean) => void
   onAddToSetlist: (track: Track) => void
@@ -36,7 +40,15 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   )
 }
 
-export function TrackTable({ tracks, selectedIds, onToggleTrack, onToggleAll, onAddToSetlist, onPreview }: Props) {
+function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <span className="text-surface-600 text-xs">⇅</span>
+  return <span className="text-accent text-xs">{dir === 'asc' ? '↑' : '↓'}</span>
+}
+
+export function TrackTable({
+  tracks, selectedIds, sortBy, sortDir, onSort,
+  onToggleTrack, onToggleAll, onAddToSetlist, onPreview,
+}: Props) {
   const { widths, tableRef, startResize, resetWidths } = useColumnWidths()
 
   const allSelected  = tracks.length > 0 && tracks.every(t => selectedIds.has(t.id))
@@ -49,6 +61,15 @@ export function TrackTable({ tracks, selectedIds, onToggleTrack, onToggleAll, on
       </div>
     )
   }
+
+  const columns: { col: SortColumn; label: string; align: string; next: string }[] = [
+    { col: 'title',    label: 'Title',    align: 'text-left',   next: 'artist'   },
+    { col: 'artist',   label: 'Artist',   align: 'text-left',   next: 'genre'    },
+    { col: 'genre',    label: 'Genre',    align: 'text-left',   next: 'bpm'      },
+    { col: 'bpm',      label: 'BPM',      align: 'text-right',  next: 'key'      },
+    { col: 'key',      label: 'Key',      align: 'text-center', next: 'duration' },
+    { col: 'duration', label: 'Duration', align: 'text-right',  next: 'actions'  },
+  ]
 
   return (
     <div className="overflow-hidden" ref={tableRef}>
@@ -78,19 +99,16 @@ export function TrackTable({ tracks, selectedIds, onToggleTrack, onToggleAll, on
               />
             </th>
 
-            {/* Resizable headers */}
-            {([
-              ['title',    'Title',    'text-left',   'artist'],
-              ['artist',   'Artist',   'text-left',   'genre'],
-              ['genre',    'Genre',    'text-left',   'bpm'],
-              ['bpm',      'BPM',      'text-right',  'key'],
-              ['key',      'Key',      'text-center', 'duration'],
-              ['duration', 'Duration', 'text-right',  'actions'],
-            ] as [string, string, string, string][]).map(([col, label, align, next]) => (
+            {/* Sortable + resizable headers */}
+            {columns.map(({ col, label, align, next }) => (
               <th key={col} className={`relative py-3 px-3 ${align} select-none`}>
-                <span className="flex items-center gap-1 justify-between">
+                <button
+                  onClick={() => onSort(col)}
+                  className={`flex items-center gap-1 w-full ${align === 'text-right' ? 'justify-end' : align === 'text-center' ? 'justify-center' : 'justify-start'} hover:text-white transition-colors ${sortBy === col ? 'text-white' : ''}`}
+                >
                   <span>{label}</span>
-                </span>
+                  <SortIndicator active={sortBy === col} dir={sortDir} />
+                </button>
                 <ResizeHandle onMouseDown={startResize(col as any, next as any)} />
               </th>
             ))}
